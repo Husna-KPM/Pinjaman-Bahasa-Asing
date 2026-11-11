@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pac-Man Jawi – Pinjaman Bahasa Asing</title>
+<link href="https://fonts.googleapis.com/css2?family=Lateef:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#05060f;--panel:#10132b;--ink:#f4f6ff;--mute:#9aa3d6;--blue:#3b6bff;--yel:#ffd400;--ok:#2ecc71;--bad:#ff4d5e;--jawi:'Lateef','Scheherazade New','Noto Naskh Arabic',serif}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;overscroll-behavior:none;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-user-select:none;user-select:none}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);touch-action:none}
+#hud{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;background:#0b0e24;border-bottom:2px solid #1d2a7a;font-weight:700;font-size:clamp(13px,2.4vmin,22px);white-space:nowrap}
+#hud button{background:#1b2260;border:0;color:#fff;border-radius:8px;font-size:1.2em;padding:2px 10px;margin-left:6px;cursor:pointer}
+#stage{flex:1;min-height:0;overflow:hidden;display:grid;place-items:center}
+canvas{display:block}
+.ov{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(5,6,15,.82);padding:10px;box-sizing:border-box;overflow:auto}
+.hide{display:none!important}
+.card{background:linear-gradient(160deg,#141a4a,#0b0e24);border:2px solid var(--blue);border-radius:22px;padding:clamp(14px,3vmin,28px);width:min(620px,94vw);max-height:96%;overflow:auto;box-sizing:border-box;text-align:center;box-shadow:0 0 44px #3b6bff66}
+h1{margin:0;color:var(--yel);font-size:clamp(26px,6vmin,46px);letter-spacing:1px}
+h2{margin:0 0 6px;color:var(--yel)}
+.sub{color:var(--mute);margin:2px 0 12px}
+.card ul{text-align:left;margin:8px 0 14px;padding-left:20px;line-height:1.5;font-size:clamp(14px,2.4vmin,18px)}
+.btn{font:700 clamp(17px,3.2vmin,24px) system-ui,sans-serif;padding:14px 34px;border:0;border-radius:14px;background:var(--yel);color:#111;cursor:pointer;box-shadow:0 5px 0 #b89a00}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b89a00}
+.word{font-family:var(--jawi);direction:rtl;font-size:clamp(70px,18vmin,140px);line-height:1.15;color:#fff;margin:6px 0}
+.qn{color:var(--mute);font-weight:700}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.ans{font-family:var(--jawi);direction:rtl;font-size:clamp(30px,6.4vmin,46px);line-height:1.2;min-height:68px;padding:8px 14px;border-radius:16px;border:2px solid var(--blue);background:#1b2260;color:#fff;cursor:pointer}
+.ans:active{transform:scale(.97)}
+.ans:disabled{opacity:1;cursor:default}
+.ans.ok{background:var(--ok);border-color:#fff;color:#04210f}
+.ans.no{background:var(--bad);border-color:#fff}
+#fb{min-height:1.6em;margin-top:12px;font-weight:700;font-size:clamp(16px,3vmin,22px)}
+#bn{pointer-events:none;background:rgba(5,6,15,.6);text-align:center}
+#bn h2{font-size:clamp(34px,9vmin,72px)}
+#bn p{font-size:clamp(16px,3.5vmin,28px);margin:0}
+#fx{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.sh{animation:sh .4s}
+@keyframes sh{20%{transform:translate(-8px,4px)}40%{transform:translate(8px,-4px)}60%{transform:translate(-6px,2px)}80%{transform:translate(6px,-2px)}}
+#es{font-size:clamp(40px,10vmin,72px);font-weight:800;color:var(--yel)}
+</style></head>
+<body>
+<div id="app">
+ <div id="hud"><span id="hS">⭐ 0</span><span id="hR">Pusingan 1/4</span><span id="hQ">Soalan 0/5</span><span id="hL">❤️ 10</span><span><button id="bM" aria-label="Bunyi">🔊</button><button id="bF" aria-label="Skrin penuh">⛶</button></span></div>
+ <div id="stage"><canvas id="cv"></canvas></div>
+
+ <div class="ov" id="menu"><div class="card">
+  <h1>🟡 PAC-MAN JAWI</h1>
+  <p class="sub">Pinjaman Bahasa Asing</p>
+  <ul>
+   <li><b>Tujuan:</b> Kenal pasti sama ada perkataan Jawi itu pinjaman daripada <b>Bahasa Inggeris</b> atau <b>Bahasa Arab</b>.</li>
+   <li>Permainan ada <b>4 pusingan</b>. Setiap pusingan ada <b>5 soalan</b> (jumlah 20 soalan). Setiap soalan bernilai <b>5 markah</b>, markah penuh ialah 100.</li>
+   <li>Gerakkan Pac-Man untuk memakan titik kecil. Makan <b>bulatan besar bertanda “?”</b> untuk memunculkan soalan. Kedudukan bulatan besar berubah pada setiap pusingan.</li>
+   <li>Elakkan <b>hantu</b>! Jika dilanggar hantu atau memilih jawapan yang salah, nyawa berkurang 1. Anda ada <b>10 nyawa</b>.</li>
+   <li><b>Komputer:</b> tekan kekunci anak panah (↑ ↓ ← →).</li>
+   <li><b>Telefon, tablet dan papan pintar:</b> leret jari ke atas, bawah, kiri atau kanan.</li>
+  </ul>
+  <button class="btn" id="go">▶ Mula Bermain</button>
+ </div></div>
+
+ <div class="ov hide" id="qv"><div class="card">
+  <div class="qn" id="qn"></div>
+  <div class="sub">Perkataan ini pinjaman daripada bahasa apa?</div>
+  <div class="word" id="w"></div>
+  <div id="opts"></div>
+  <div id="fb"></div>
+ </div></div>
+
+ <div class="ov hide" id="bn"></div>
+
+ <div class="ov hide" id="end"><div class="card">
+  <h1 id="et"></h1><div id="es"></div><p id="em" class="sub"></p>
+  <button class="btn" id="again">🔁 Main Semula</button>
+ </div></div>
+ <div id="fx"></div>
+</div>
+
+<script>
+const EN='بهاس ايڠݢريس',AR='بهاس عرب';
+const W=[['سوسيج',0],['سڤاݢيتي',0],['استرونومي',0],['موزيوم',0],['کومڤوتر',0],['کاميرا',0],['تيليفون',0],['راديو',0],['کلکولاتور',0],['ريستورن',0],['کتاب',1],['سجاده',1],['کروسي',1],['قاموس',1],['استاذ',1],['دعاء',1],['حج',1],['ذيکير',1],['طواف',1],['صبر',1]];
+const M=["###################","#........#........#","#.##.###.#.###.##.#","#.................#","#.##.#.#####.#.##.#","#....#...#...#....#","####.### # ###.####","####.#       #.####","####.# ## ## #.####","#....  #   #  ....#","####.# ##### #.####","####.#       #.####","####.### # ###.####","#........#........#","#.##.###.#.###.##.#","#..#...........#..#","##.#.#.#####.#.#.##","#....#...#...#....#","#.######.#.######.#","#.................#","###################"];
+const R=M.length,C=19,D=[[1,0],[-1,0],[0,1],[0,-1]];
+const $=id=>document.getElementById(id);
+const wall=(c,r)=>r<0||r>=R||c<0||c>=C||M[r][c]==='#';
+const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const cv=$('cv'),cx=cv.getContext('2d'),wc=document.createElement('canvas');
+let ts=20,dpr=1,S=null,P={c:9,r:19,dx:0,dy:0,p:0,face:0},G=[],dots=null,pel=[],lastPel=[],t=0,muted=false,AC=null;
+
+/* ===== Bunyi ===== */
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function tone(f,d,ty='square',v=.08,at=0,to){if(muted)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),s=a.currentTime+at;o.type=ty;o.frequency.setValueAtTime(f,s);if(to)o.frequency.exponentialRampToValueAtTime(to,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+.02)}
+const sfx={chomp(){tone(P.alt?180:260,.07,'triangle',.07);P.alt=!P.alt},pel(){tone(300,.25,'sine',.1,0,900)},
+ok(){[523,659,784,1047].forEach((f,i)=>tone(f,.18,'triangle',.12,i*.09))},bad(){tone(220,.45,'sawtooth',.1,0,70)},hit(){tone(500,.35,'square',.09,0,60)},
+win(){[523,659,784,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.12,i*.12))},over(){[392,330,262,196].forEach((f,i)=>tone(f,.3,'sawtooth',.09,i*.22))}};
+
+/* ===== Kesan ===== */
+function burst(a,n){const f=$('fx');for(let i=0;i<n;i++){const e=document.createElement('span');e.textContent=a[i%a.length];e.style.cssText=`position:absolute;left:50%;top:45%;font-size:${24+Math.random()*34}px`;f.appendChild(e);const an=Math.random()*6.283,r=120+Math.random()*Math.min(innerWidth,innerHeight)*.45;e.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(an)*r}px),calc(-50% + ${Math.sin(an)*r}px)) scale(1.3) rotate(${Math.random()*360}deg)`,opacity:0}],{duration:1100+Math.random()*600,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>e.remove()}}
+function shake(){const a=$('app');a.classList.remove('sh');void a.offsetWidth;a.classList.add('sh')}
+function hud(){$('hS').textContent='⭐ '+S.score;$('hR').textContent=`Pusingan ${S.round+1}/4`;$('hQ').textContent=`Soalan ${S.ans}/5`;$('hL').textContent='❤️ '+S.lives}
+function banner(h,s){const b=$('bn');b.innerHTML=`<div><h2>${h}</h2><p>${s}</p></div>`;b.classList.remove('hide');S.state='intro';setTimeout(()=>{b.classList.add('hide');if(S.state==='intro')S.state='play'},1900)}
+
+/* ===== Logik permainan ===== */
+function newGame(){$('menu').classList.add('hide');$('end').classList.add('hide');lastPel=[];S={score:0,lives:10,tot:0,ans:0,round:0,inv:0,lock:0,state:'intro',qs:sh(W.slice())};startRound(0)}
+function resetPos(){P={c:9,r:19,dx:0,dy:0,p:0,nd:null,face:0,alt:false};const sp=[[10,9],[9,9],[8,9],[9,7]],cl=['#ff3b3b','#ff8ad8','#3de2ff','#ffa63b'],ag=[.85,.7,.5,.6];
+ G=sp.slice(0,S.round>=2?4:3).map((s,i)=>({c:s[0],r:s[1],dx:0,dy:0,p:0,col:cl[i],ag:ag[i],i,delay:1.4+i*1.4}))}
+function startRound(n){S.round=n;S.ans=0;
+ dots=Array.from({length:R},(_,r)=>Array.from({length:C},(_,c)=>!wall(c,r)));
+ const cand=[];for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(!wall(c,r)&&Math.abs(c-9)+Math.abs(r-19)>5&&Math.abs(c-9)+Math.abs(r-9)>3&&!lastPel.some(p=>p.c==c&&p.r==r))cand.push([c,r]);
+ sh(cand);const pk=[];for(const p of cand){if(pk.every(q=>Math.abs(q[0]-p[0])+Math.abs(q[1]-p[1])>=6))pk.push(p);if(pk.length==5)break}
+ for(const p of cand){if(pk.length==5)break;if(!pk.includes(p))pk.push(p)}
+ const qs=S.qs.slice(n*5,n*5+5);pel=pk.map((p,i)=>({c:p[0],r:p[1],q:qs[i],on:true}));lastPel=pel;
+ pel.forEach(p=>dots[p.r][p.c]=false);dots[19][9]=false;resetPos();hud();
+ banner(`Pusingan ${n+1} / 4`,n?'Kedudukan bulatan besar telah berubah!':'Bersedia! Makan bulatan besar “?” untuk menjawab soalan.')}
+function pArr(e){if(e.nd&&!wall(e.c+e.nd[0],e.r+e.nd[1])){e.dx=e.nd[0];e.dy=e.nd[1]}else if(wall(e.c+e.dx,e.r+e.dy)){e.dx=0;e.dy=0}}
+function gArr(g){const rv=g.dx||g.dy;let o=D.filter(v=>!wall(g.c+v[0],g.r+v[1])&&!(rv&&v[0]==-g.dx&&v[1]==-g.dy));if(!o.length)o=D.filter(v=>!wall(g.c+v[0],g.r+v[1]));
+ let v;if(Math.random()<g.ag){const k=g.i==1?4:0,tx=P.c+P.dx*k,ty=P.r+P.dy*k;v=o.map(v=>[v,(g.c+v[0]-tx)**2+(g.r+v[1]-ty)**2+Math.random()]).sort((a,b)=>a[1]-b[1])[0][0]}else v=o[Math.random()*o.length|0];
+ g.dx=v[0];g.dy=v[1]}
+function adv(e,d,sp,ar){if(!(e.dx||e.dy)){ar(e);if(!(e.dx||e.dy))return}
+ e.p+=sp*d;while(e.p>=1){e.c+=e.dx;e.r+=e.dy;e.p-=1;ar(e);if(!(e.dx||e.dy)){e.p=0;break}}}
+function upd(d){if(S.state!=='play')return;
+ adv(P,d,5.4,pArr);if(P.dx||P.dy)P.face=Math.atan2(P.dy,P.dx);
+ const px=P.c+P.dx*P.p,py=P.r+P.dy*P.p,tc=Math.round(px),tr=Math.round(py);
+ if(dots[tr]&&dots[tr][tc]){dots[tr][tc]=false;sfx.chomp()}
+ const pl=pel.find(p=>p.on&&p.c==tc&&p.r==tr);if(pl)return ask(pl);
+ if(S.inv>0)S.inv-=d;
+ for(const g of G){if(g.delay>0){g.delay-=d;continue}adv(g,d,3.9+S.round*.35,gArr);
+  if(S.inv<=0&&Math.hypot(g.c+g.dx*g.p-px,g.r+g.dy*g.p-py)<.6){return hit()}}}
+function hit(){S.lives--;sfx.hit();shake();burst(['💥','😵','💔'],10);hud();if(S.lives<=0)return over();S.inv=2.5;resetPos()}
+function ask(pl){S.state='q';S.cur=pl;sfx.pel();$('qn').textContent=`Pusingan ${S.round+1} · Soalan ${S.ans+1} / 5`;$('w').textContent=pl.q[0];
+ const b=$('opts');b.innerHTML='';sh([0,1]).forEach(k=>{const e=document.createElement('button');e.className='ans';e.textContent=k?AR:EN;e.dataset.k=k;e.onclick=()=>answer(k,e);b.appendChild(e)});
+ $('fb').textContent='';$('qv').classList.remove('hide')}
+function answer(k,e){if(S.lock)return;S.lock=1;const q=S.cur.q,ok=k===q[1];
+ [...$('opts').children].forEach(b=>{b.disabled=true;if(+b.dataset.k===q[1])b.classList.add('ok')});
+ const fb=$('fb');
+ if(ok){S.score+=5;sfx.ok();burst(['🎉','⭐','✨','👏','🌟','💯'],24);fb.style.color='var(--ok)';fb.textContent='✅ Betul! +5 markah'}
+ else{S.lives--;e.classList.add('no');sfx.bad();shake();burst(['❌','😢','💔','😵'],16);fb.style.color='var(--bad)';fb.textContent='❌ Salah! Jawapan: '+(q[1]?'Bahasa Arab':'Bahasa Inggeris')}
+ S.cur.on=false;S.ans++;hud();setTimeout(next,1700)}
+function next(){$('qv').classList.add('hide');S.lock=0;if(S.lives<=0)return over();
+ if(S.ans>=5){if(S.round>=3)return over();sfx.win();startRound(S.round+1);return}
+ S.inv=2;S.state='play'}
+function over(){S.state='end';$('qv').classList.add('hide');const w=S.lives>0;w?sfx.win():sfx.over();burst(w?['🏆','🎉','⭐','👏']:['💔','😢'],20);
+ $('et').textContent=w?'Tahniah! 🏆':'Permainan Tamat 💔';$('es').textContent=S.score+' / 100';
+ $('em').textContent=(S.score>=90?'Cemerlang! Anda pakar perkataan pinjaman.':S.score>=70?'Bagus! Teruskan usaha.':S.score>=50?'Baik. Cuba lagi untuk markah yang lebih tinggi.':'Jangan putus asa, cuba lagi!')+(w?` Nyawa berbaki: ${S.lives}.`:'');
+ setTimeout(()=>$('end').classList.remove('hide'),900)}
+
+/* ===== Lukisan ===== */
+function mkWalls(){wc.width=C*ts*dpr;wc.height=R*ts*dpr;const g=wc.getContext('2d');g.scale(dpr,dpr);
+ g.fillStyle='#0a1040';for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(wall(c,r))g.fillRect(c*ts,r*ts,ts,ts);
+ g.strokeStyle='#4d7cff';g.lineWidth=Math.max(2,ts*.1);g.lineCap='round';g.shadowColor='#3b6bff';g.shadowBlur=ts*.5;g.beginPath();
+ for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(wall(c,r)){const x=c*ts,y=r*ts,o=(a,b)=>a>=0&&a<C&&b>=0&&b<R&&!wall(a,b);
+  if(o(c+1,r)){g.moveTo(x+ts,y);g.lineTo(x+ts,y+ts)}if(o(c-1,r)){g.moveTo(x,y);g.lineTo(x,y+ts)}
+  if(o(c,r+1)){g.moveTo(x,y+ts);g.lineTo(x+ts,y+ts)}if(o(c,r-1)){g.moveTo(x,y);g.lineTo(x+ts,y)}}
+ g.stroke()}
+function rs(){const a=$('stage');dpr=Math.min(devicePixelRatio||1,2);ts=Math.max(8,Math.floor(Math.min(a.clientWidth/C,a.clientHeight/R)));
+ cv.style.width=C*ts+'px';cv.style.height=R*ts+'px';cv.width=C*ts*dpr;cv.height=R*ts*dpr;mkWalls()}
+new ResizeObserver(rs).observe($('stage'));addEventListener('resize',rs);
+function ghost(g){const x=(g.c+g.dx*g.p+.5)*ts,y=(g.r+g.dy*g.p+.5)*ts,r=ts*.42;
+ cx.fillStyle=g.col;cx.beginPath();cx.arc(x,y-r*.1,r,Math.PI,0);cx.lineTo(x+r,y+r*.9);
+ for(let i=1;i<=6;i++)cx.lineTo(x+r-i*r/3,y+r*.9-(i%2?0:r*.3*(.6+.4*Math.sin(t*12))));cx.closePath();cx.fill();
+ for(const s of[-1,1]){cx.fillStyle='#fff';cx.beginPath();cx.arc(x+s*r*.38,y-r*.2,r*.28,0,7);cx.fill();cx.fillStyle='#1a2cff';cx.beginPath();cx.arc(x+s*r*.38+g.dx*r*.12,y-r*.2+g.dy*r*.12,r*.14,0,7);cx.fill()}}
+function draw(){cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,C*ts,R*ts);cx.drawImage(wc,0,0,C*ts,R*ts);if(!S)return;
+ cx.fillStyle='#ffe2b8';for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(dots[r][c]){cx.beginPath();cx.arc((c+.5)*ts,(r+.5)*ts,ts*.09,0,7);cx.fill()}
+ for(const p of pel)if(p.on){const x=(p.c+.5)*ts,y=(p.r+.5)*ts,rr=ts*(.34+.06*Math.sin(t*6));cx.save();cx.shadowColor='#ffd400';cx.shadowBlur=ts*.7;cx.fillStyle='#ffd400';cx.beginPath();cx.arc(x,y,rr,0,7);cx.fill();cx.restore();
+  cx.fillStyle='#1a1a1a';cx.font=`800 ${ts*.5}px system-ui,sans-serif`;cx.textAlign='center';cx.textBaseline='middle';cx.fillText('?',x,y+ts*.03)}
+ G.forEach(ghost);
+ if(!(S.inv>0&&Math.floor(t*10)%2)){const x=(P.c+P.dx*P.p+.5)*ts,y=(P.r+P.dy*P.p+.5)*ts,r=ts*.44,m=(P.dx||P.dy)?.04+.22*Math.abs(Math.sin(t*14)):.1;
+  cx.fillStyle='#ffd400';cx.beginPath();cx.moveTo(x,y);cx.arc(x,y,r,P.face+m*Math.PI,P.face+(2-m)*Math.PI);cx.closePath();cx.fill()}}
+let lt=0;function loop(n){const d=Math.min((n-lt)/1000,.05);lt=n;t=n/1000;if(S)upd(d);draw();requestAnimationFrame(loop)}
+
+/* ===== Kawalan ===== */
+function sd(v){if(!S||S.state!=='play')return;P.nd=v;if((P.dx||P.dy)&&v[0]==-P.dx&&v[1]==-P.dy){P.c+=P.dx;P.r+=P.dy;P.p=1-P.p;P.dx=v[0];P.dy=v[1]}}
+const KM={ArrowRight:D[0],ArrowLeft:D[1],ArrowDown:D[2],ArrowUp:D[3],d:D[0],a:D[1],s:D[2],w:D[3]};
+addEventListener('keydown',e=>{const v=KM[e.key];if(v){e.preventDefault();sd(v)}});
+let sx=0,sy=0,sw=false;const ap=$('app');
+ap.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;sw=true});
+ap.addEventListener('pointermove',e=>{if(!sw)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))>22){sd(Math.abs(dx)>Math.abs(dy)?(dx>0?D[0]:D[1]):(dy>0?D[2]:D[3]));sx=e.clientX;sy=e.clientY}});
+addEventListener('pointerup',()=>sw=false);addEventListener('pointercancel',()=>sw=false);
+$('go').onclick=()=>{ac();try{const f=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();if(f&&f.catch)f.catch(()=>{})}catch(e){}newGame()};
+$('again').onclick=()=>{ac();newGame()};
+$('bM').onclick=()=>{muted=!muted;$('bM').textContent=muted?'🔇':'🔊'};
+$('bF').onclick=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}};
+addEventListener('contextmenu',e=>e.preventDefault());
+rs();requestAnimationFrame(loop);
+</script>
+</body></html>
